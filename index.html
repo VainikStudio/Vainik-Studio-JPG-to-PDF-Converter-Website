@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vainik Studio JPG to PDF Converter</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <!-- jsPDF Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+</head>
+
+<style>
+body {
+    padding-top: 110px;
+    background-color: #3f4346; /* Light gray background for better contrast */
+}
+
+.container {
+    max-width: 600px;
+    background-color: #ffffff; /* White background for the form container */
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #343a40; /* Dark gray color for the heading */
+}
+
+.form-group label {
+    font-weight: bold;
+    color: #495057; /* Slightly darker gray for labels */
+}
+
+.form-control-file {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 10px;
+    background-color: #e9ecef; /* Light background for file input */
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}
+
+
+</style>
+<body>
+    <div class="container">
+        <h1 class="text-center">JPG to PDF Converter</h1>
+        <div class="form-group">
+            <label for="imageInput">Select Images</label>
+            <input type="file" class="form-control-file" id="imageInput" accept="image/*" multiple>
+        </div>
+        <div class="form-group">
+            <label for="widthInput">Width (px)</label>
+            <input type="number" class="form-control" id="widthInput" placeholder="Enter width">
+        </div>
+        <div class="form-group">
+            <label for="heightInput">Height (px)</label>
+            <input type="number" class="form-control" id="heightInput" placeholder="Enter height">
+        </div>
+        <button id="convertBtn" class="btn btn-primary btn-block">Convert to PDF</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+  <script>
+    document.getElementById('convertBtn').addEventListener('click', async () => {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+  const files = document.getElementById('imageUpload').files;
+
+  if (files.length === 0) {
+    alert('Please upload at least one JPG image.');
+    return;
+  }
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const imgData = await readFileAsDataURL(file);
+    const img = new Image();
+    img.src = imgData;
+
+    await new Promise((resolve) => {
+      img.onload = () => {
+        const imgWidth = pdf.internal.pageSize.getWidth();
+        const imgHeight = (img.height * imgWidth) / img.width;
+        if (i > 0) pdf.addPage();
+        pdf.addImage(img, 'JPEG', 0, 0, imgWidth, imgHeight);
+        resolve();
+      };
+    });
+  }
+
+  pdf.save('converted.pdf');
+});
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('convertBtn').addEventListener('click', async () => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    const files = document.getElementById('imageInput').files;
+    const width = parseInt(document.getElementById('widthInput').value);
+    const height = parseInt(document.getElementById('heightInput').value);
+
+    if (files.length === 0) {
+        alert('Please select at least one image.');
+        return;
+    }
+
+    if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+        alert('Please enter valid width and height.');
+        return;
+    }
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const imgData = await readFileAsDataURL(file);
+        const img = new Image();
+        img.src = imgData;
+
+        await new Promise((resolve) => {
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                const resizedImgData = canvas.toDataURL('image/jpeg');
+
+                if (i > 0) pdf.addPage();
+                pdf.addImage(resizedImgData, 'JPEG', 0, 0, width, height);
+                resolve();
+            };
+        });
+    }
+
+    pdf.save('converted.pdf');
+});
+
+function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+  </script>
+</body>
+</html>
